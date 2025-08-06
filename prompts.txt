@@ -1,0 +1,75 @@
+SYSTEM MESSAGE:
+The texts provided in the prompt are taken from the OCR outputs from old newspapers. 
+Some characters in the OCR text may be misread (e.g. "h" as "n", "d" as "o", "s" as "ſ", "i" as "t", "l" as "t"), 
+so you should be able to distinguish this kind of mistakes and process them correctly. 
+You should also consider different cognates of a key word as matched. For exmple several word forms, 
+derivatives, and related terms of the German word „Terrorismus“ (terrorism): Terrorist, Terroranschlag, 
+Terrororganisation, Antiterrorkampf, terrorisieren, etc.
+SYSTEM MESSAGE END
+
+TASK:
+Find any matches to the following words in the TEXT: "Regelmäßig".
+If success then respond with "Found: <word1, word2, ...>." Otherwise just respond with "Not found."
+TASK END
+
+TEXT: 
+— In der Verwaltung des Peterpfennigs ergaben
+sich große Unregelmäßigkeiten. Das ist der Weltunter-
+gang. Wenns erst in der Verwaltung des unfehlbaren
+Papstes zu fehlen beginnt, dann, dann ist das Ende nahe.
+- — Ein schönes Beispiel des Entbehrungslohnes,
+welchen die Kapitalisten einstreichen, bietet der Rechnungs¬
+abschluß der Zuckerfabrik Droebel in der Provinz Sachsen.
+Bei einem Aktienkapital von 150000 Mark hat diese
+Fabrik im Jahre 1890/91 aus Zucker und seinen Neben-
+Produkten nicht weniger als 1 075 702 Mark erlöst und
+davon, einschließlich 11 912 Mark Abschreibungen, mir
+896 257 Mark an Betriebs- und Geschäftsunkosten vcr-
+ausgabt. Der erzielte Gewinn beläuft sich somit auf
+179 445 Mark, also auf 120 Prozent des Aktien¬
+kapitals. In einem Jahre haben also die armen Aktionäre
+ihr Kapital mehr als verdoppelt. Und auch diese Fabrik
+genießt die Ausfuhrprämien, welche ihr der Staat aus
+den Stenergcldern des arbeitenden Volkes zuschiebt.
+— Hundert und zwanzig Prozent Dividende aus der
+einen Seite und auf der andern das grinsende Gespenst
+des Hungers. In Baden-Baden wurde am 9. Mai ein
+Plann, der auf dem Markte Wurzeln und Abfälle auf-
+hob und gierig verschlang, von einem Schutzmann zur
+Wache gebracht; der Verhaftete erschoß sich aber vor dem
+Polizcigefängniß. Die bürgerlichen Blätter werfen die
+Frage auf, ob der Mann nicht im Wahnsinn gehandelt.
+Möglich ist es, daß ihn der Hunger wahnsinnig gemacht.
+Ist es denn heute nicht schon der hellste Wahnsinn, wenn
+einer geboren wird und er kann sich nicht als der im
+geheiligten Ehebette eines reichen Vaters erzeugte Sohn
+ausweisen ?
+TEXT END
+
+/-------------------------------------------------------------\
+
+"""<|user|>
+    You are an intelligent assistant helping to search for words in old OCR-scanned newspapers matching to one of the key words from the Search Query.
+    Some characters in the OCR text may be misread (e.g. "h" as "n", "d" as "o", "s" as "ſ", "i" as "t", "l" as "t"), so you should be able to distinguish this kind of mistakes and process them correctly.
+    You should also consider different cognates of a key word as matched. For exmple several word forms, derivatives, and related terms of the German word „Terrorismus“ (terrorism): Terrorist, Terroranschlag, Terrororganisation, Antiterrorkampf, terrorisieren, etc.
+
+    Example 1:
+        OCR Text: "Irrungen und Wirrungen im internationalen Staatsleben. Evolutionäre ader revoluttonäre Eutwicklung? In Nummer 32 unſeres Blattes haven wir vargetegr, wie das Auf⸗ und Niederwogen der poli⸗tiſchen Tagesereigniſſe veeinftußt wiro von orei Stromungen, die in allen Landern mit einander. Der triege⸗riſche Zerſchmetterungsimperialismus, der frieo⸗liche Verſtandigungsimperialismus, in deſſen Fayrwaſſer der Negierungsſozialismus ſegelt"
+        Search Query: "Anarchismus, Terrorismus, Revolution, Imperialismus, Sozialismus, Kommunist"
+        Are there any matches to the search query? If yes then respond with "Found: <word1, word2, ...>." otherwise just "Not found.".
+        <|assistant|> "Found: revoluttonäre, Zerſchmetterungsimperialismus, Verſtandigungsimperialismus, Negierungsſozialismus"
+    Example 2:
+        OCR Text: "Das Pro⸗ſtumm der tunaeſionstuſternen, nuttonurſpgiuten teformparrei, das nach dem Zeugnis von vielen Perſonlichkeiten in Würzburg aufgeſtellt worden iſt, hat alſo durch die Mitgliedſchaften Stempel und Unterſchrift erhalten. Es muter dayer reichlich drollig an, wenn man in der Erfurter „Tribune“ lieſt, daß der Neichstagsabge⸗oronete Paul Reißhaus in ſeinem Bericht über den Wurzburger Parteitag gegen unſer „Mitteilungs⸗blatt“ polemimert und behauptet hat, eine Rechts⸗entwiklung der Partei ſei nach Würzburg ganz unmoglich."
+        Search Query: "Anarchismus, Terrorismus, Revolution, Imperialismus, Sozialismus, Kommunist"
+        Are there any matches to the search query? If yes then respond with "Found: <word1, word2, ...>." otherwise just "Not found.".
+        <|assistant|> "Not Found."
+    OCR Text:
+    \"\"\"{ocr_text}\"\"\"
+    Search Query:
+    \"\"\"{self.query}\"\"\"
+    Are there any matches to the search query? If yes then respond with "Found: <word1, word2, ...>." otherwise just "Not found.".
+    <|assistant|>
+"""
+
+/-------------------------------------------------------------\
+
