@@ -1,16 +1,39 @@
-SYSTEM MESSAGE:
-The texts provided in the prompt are taken from the OCR outputs from old newspapers. 
-Some characters in the OCR text may be misread (e.g. "h" as "n", "d" as "o", "s" as "ſ", "i" as "t", "l" as "t"), 
-so you should be able to distinguish this kind of mistakes and process them correctly. 
-You should also consider different cognates of a key word as matched. For exmple several word forms, 
-derivatives, and related terms of the German word „Terrorismus“ (terrorism): Terrorist, Terroranschlag, 
-Terrororganisation, Antiterrorkampf, terrorisieren, etc.
-SYSTEM MESSAGE END
+"SYSTEM MESSAGE:\n\n"
+    "The texts provided in the prompt are taken from OCR outputs of old newspapers. "
+    "Some characters in the OCR text may be misread (e.g., 'h' as 'n', 'd' as 'o', 's' as 'ſ', 'i' as 't', 'l' as 't'), "
+    "so you should be able to recognize and process these kinds of mistakes correctly. "
+    "You should also consider different cognates of a keyword as matched. For example, several word forms, "
+    "derivatives, and related terms of the German word 'Terrorismus' (terrorism): Terrorist, Terroranschlag, "
+    "Terrororganisation, Antiterrorkampf, terrorisieren, etc.\n\n"
+    "Give your answer in JSON format as follows:\n"
+    "{\n"
+    '  "success": boolean,\n'
+    '  "word1": [],\n'
+    '  "word2": [],\n'
+    '  ...\n'
+    '  "wordn": []\n'
+    "}\n\n"
+    "Example:\n"
+    "If the query is {word1: \"Regelmäßig\", word2: \"Polizei\", word3: \"Terrorismus\"},\n"
+    "the output JSON could be:\n"
+    "{\n"
+    '  "success": true,\n'
+    '  "word1": ["Unregelmäßig"],\n'
+    '  "word2": ["Polizisten", "Polizeiwagen"],\n'
+    '  "word3": []\n'
+    "}\n\n"
+    "or\n\n"
+    "{\n"
+    '  "success": false,\n'
+    '  "word1": [],\n'
+    '  "word2": [],\n'
+    '  "word3": []\n'
+    "}\n\n"
+    "depending on the matches found.\n\n"
+"SYSTEM MESSAGE END"
 
-TASK:
-Find any matches to the following words in the TEXT: "Regelmäßig".
-If success then respond with "Found: <word1, word2, ...>." Otherwise just respond with "Not found."
-TASK END
+Find any matches to the words from the Query in the TEXT.
+Query = {word1: "Regelmäßig", word2: "Polizei", word3: "Terrorismus"}
 
 TEXT: 
 — In der Verwaltung des Peterpfennigs ergaben

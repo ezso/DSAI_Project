@@ -1,7 +1,9 @@
 from dataset_collector import DatasetCollector
 from ddb_api_calls import DDBAPI
-from krakenOCR import ocr2text, xml2text
-from llm_prompt import LLMPrompt
+from krakenOCR_model import ocr2text, xml2text
+from regex_search_model import RegexSearchModel
+from phi_models import PhiModel
+from gpt_4o_mini import GPT4oMini
 import os
 import shutil
 import warnings
@@ -30,27 +32,63 @@ def chunk_text_by_words(text, max_words):
 
 # Main function to orchestrate the process
 def main():
-    query = "Anarchismus, Terrorismus, Revolution, Imperialismus, Sozialismus, Kommunist"
-    # Load model and tokenizer
-    # model_id = "microsoft/phi-3-mini-4k-instruct"
+    terms = ["Anarchismus", "Kommunismus", "Sozialismus", "Revolution"]
+    # Define the model ID and system message
+    # Uncomment the model_id you want to use
     # model_id = "microsoft/phi-1_5"
-    model_id = "microsoft/phi-3-mini-4k-instruct"
-
-    system_msg = (
-        "The texts provided in the prompt are taken from OCR outputs from old german newspapers. "
-        "Some characters in the OCR text may be misread (e.g. 'h' as 'n', 'd' as 'o', 's' as 'ſ', "
-        "'i' as 't', 'l' as 't'), so you should be able to distinguish these kinds of mistakes and process them correctly. "
-        "You should also consider different cognates of a key word as matched. "
-        "For example: several word forms, derivatives, and related terms of the German word 'Terrorismus' (terrorism): "
-        "Terrorist, Terroranschlag, Terrororganisation, Antiterrorkampf, terrorisieren, etc.\n\n"
-    )
-    # Load tokenizer and model
-    llm = LLMPrompt(model_id, query, system_msg)
+    # model_id = "microsoft/phi-3-mini-4k-instruct"
+    # model_id = "gpt-4o-mini"
+    model_id = "regex_search_model"  # Placeholder for regex search model
 
     # Set to True if you want to use Kraken OCR
-    use_kraken = False 
-    # Set to True if you want to use GPT-4o-mini
-    use_4o_mini = True
+    use_kraken = False
+
+    system_msg = (
+        "SYSTEM MESSAGE:\n\n"
+        "The texts provided in the prompt are taken from OCR outputs of old newspapers. "
+        "Some characters in the OCR text may be misread (e.g., 'h' as 'n', 'd' as 'o', 's' as 'ſ', 'i' as 't', 'l' as 't'), "
+        "so you should be able to recognize and process these kinds of mistakes correctly. "
+        "You should also consider different cognates of a keyword as matched. For example, several word forms, "
+        "derivatives, and related terms of the German word 'Terrorismus' (terrorism): Terrorist, Terroranschlag, "
+        "Terrororganisation, Antiterrorkampf, terrorisieren, etc.\n\n"
+        "Give your answer in JSON format as follows:\n"
+        "{\n"
+        '  "success": boolean,\n'
+        '  "word1": [],\n'
+        '  "word2": [],\n'
+        '  ...\n'
+        '  "wordn": []\n'
+        "}\n\n"
+        "Example:\n"
+        "If the query is {word1: \"Regelmäßig\", word2: \"Polizei\", word3: \"Terrorismus\"},\n"
+        "the output JSON could be:\n"
+        "{\n"
+        '  "success": true,\n'
+        '  "word1": ["Unregelmäßig"],\n'
+        '  "word2": ["Polizisten", "Polizeiwagen"],\n'
+        '  "word3": []\n'
+        "}\n\n"
+        "or\n\n"
+        "{\n"
+        '  "success": false,\n'
+        '  "word1": [],\n'
+        '  "word2": [],\n'
+        '  "word3": []\n'
+        "}\n\n"
+        "depending on the matches found.\n\n"
+        "SYSTEM MESSAGE END"
+    )
+
+    query = "{" + ", ".join([f'word{i+1}: "{term}"' for i, term in enumerate(terms)]) + "}"  # 'Anarchismus, Kommunismus, Sozialismus, Revolution'
+    
+    # Load tokenizer and model
+    if model_id == "regex_search_model":
+        model = RegexSearchModel(terms)
+    elif model_id == "gpt-4o-mini":
+        model = GPT4oMini(model_id, query=query, system_msg=system_msg)
+    elif model_id == "microsoft/phi-3-mini-4k-instruct":
+        model = PhiModel(model_id, query=query, system_msg=system_msg)
+
     # Initialize DDB API with parameters
     # The first parameter is the number of items to fetch, the second is the offset
     rows = 10
@@ -60,8 +98,8 @@ def main():
     response = ddb.get_ddb_data()
     item_ids = ddb.get_ids(response)
     # Create a csv file to store the results
-    csv_file = f"dataset_{rows}_{offset}.csv"
-    collector = DatasetCollector(csv_file)
+    csv_file = f"dataset_{model_id}_{rows}_{offset}.csv"
+    collector = DatasetCollector(csv_file, terms)
     for item_id in item_ids:
         if ddb.in_visited_ids(item_id):
             print(f"Skipping already visited ID: {item_id}")
@@ -106,20 +144,18 @@ def main():
 
             for idx, chunk in enumerate(chunk_text_by_words(full_text, max_chunk_length), 1):
                 print(f"Processing item {item_id}, chunk {idx}")
-                if use_4o_mini:
-                    # Generate response using GPT-4o-mini
-                    llm_response = llm.generate_4o_mini_response(chunk)
-                else:
-                    # Generate response using phi-3-mini-4k-instruct
-                    llm_response = llm.generate_phi_response(chunk)
-                collector.add_row(
-                    item_id=item_id,
-                    publisher=publisher,
-                    pub_date=issued,
-                    page_num=page,
-                    chunk=chunk,
-                    response=llm_response
-                )
+                model_response = model.generate_response(chunk)
+                # If model_response is not a dict (e.g., JSON decode failed), wrap it
+                if not isinstance(model_response, dict):
+                    model_response = {"llm_response": str(model_response)}
+                collector.add_row({
+                    "item_id": item_id,
+                    "publisher": publisher,
+                    "pub_date": issued,
+                    "page_num": page,
+                    "chunk": chunk,
+                    **model_response  # if model_response is a dict
+                })
         
         # delete the image and xml files
         clean_the_folder()
