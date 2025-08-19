@@ -37,8 +37,8 @@ def main():
     # Uncomment the model_id you want to use
     # model_id = "microsoft/phi-1_5"
     # model_id = "microsoft/phi-3-mini-4k-instruct"
-    # model_id = "gpt-4o-mini"
-    model_id = "regex_search_model"  # Placeholder for regex search model
+    model_id = "gpt-4o-mini"
+    # model_id = "regex_search_model"  # Placeholder for regex search model
 
     # Set to True if you want to use Kraken OCR
     use_kraken = False
@@ -51,7 +51,7 @@ def main():
         "You should also consider different cognates of a keyword as matched. For example, several word forms, "
         "derivatives, and related terms of the German word 'Terrorismus' (terrorism): Terrorist, Terroranschlag, "
         "Terrororganisation, Antiterrorkampf, terrorisieren, etc.\n\n"
-        "Give your answer in JSON format as follows:\n"
+        "Give your answer in a strict JSON format without any extra additional words or signs as follows:\n"
         "{\n"
         '  "success": boolean,\n'
         '  "word1": [],\n'
@@ -76,7 +76,7 @@ def main():
         '  "word3": []\n'
         "}\n\n"
         "depending on the matches found.\n\n"
-        "SYSTEM MESSAGE END"
+        "SYSTEM MESSAGE END\n\n"
     )
 
     query = "{" + ", ".join([f'word{i+1}: "{term}"' for i, term in enumerate(terms)]) + "}"  # 'Anarchismus, Kommunismus, Sozialismus, Revolution'
@@ -98,7 +98,8 @@ def main():
     response = ddb.get_ddb_data()
     item_ids = ddb.get_ids(response)
     # Create a csv file to store the results
-    csv_file = f"dataset_{model_id}_{rows}_{offset}.csv"
+    model_name = model_id.split("/")[-1]
+    csv_file = f"dataset_{model_name}_{rows}_{offset}.csv"
     collector = DatasetCollector(csv_file, terms)
     for item_id in item_ids:
         if ddb.in_visited_ids(item_id):
@@ -147,7 +148,11 @@ def main():
                 model_response = model.generate_response(chunk)
                 # If model_response is not a dict (e.g., JSON decode failed), wrap it
                 if not isinstance(model_response, dict):
-                    model_response = {"llm_response": str(model_response)}
+                    model_response = {
+                        "success": False, 
+                        **{term: [] for term in terms},
+                        "llm_response": str(model_response)
+                    }
                 collector.add_row({
                     "item_id": item_id,
                     "publisher": publisher,

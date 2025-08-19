@@ -5,14 +5,17 @@ import json
 class PhiModel:
     def __init__(self, model_id, query, system_msg):
         self.query = query
-        # Load tokenizer and model
         self.tokenizer = AutoTokenizer.from_pretrained(model_id)
-        self.model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=torch.float16, device_map="auto")
+        self.model = AutoModelForCausalLM.from_pretrained(
+            model_id,
+            torch_dtype=torch.float16,
+            device_map="auto"
+        )
         self.model.config.pad_token_id = self.tokenizer.eos_token_id
         self.system_msg = system_msg
 
-    def generate_prompt_phi(self, ocr_text):
-        prompt = (
+    def generate_prompt(self, ocr_text):
+        return (
             self.system_msg +
             "Find any matches to the words from the Query in the TEXT.\n\n"
             f"Query = {self.query}\n\n"
@@ -20,11 +23,9 @@ class PhiModel:
             f"{ocr_text}\n"
             "TEXT END"
         )
-        return prompt
-
 
     def generate_response(self, ocr_text):
-        prompt = self.generate_prompt_phi(ocr_text)
+        prompt = self.generate_prompt(ocr_text)
         # Tokenize and run generation
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)
         with torch.no_grad():
@@ -39,14 +40,12 @@ class PhiModel:
 
         # Decode and print result
         result = self.tokenizer.decode(output[0], skip_special_tokens=True)
-        clean_prompt = prompt.replace("<|user|>", "").replace("<|assistant|>", "").strip()
-        response_text = result.replace(clean_prompt, "", 1).strip()
-
+        text_response = result.split("TEXT END")[-1].strip()
         # Try to parse as JSON
         try:
-            response_json = json.loads(response_text)
-            return response_json
-        except Exception:
-            # Fallback: return as a dict with raw text
-            return {"llm_response": response_text}
-
+            json_response = json.loads(text_response)
+            print(f"Parsed JSON response: {json_response}")
+            return json_response
+        except json.JSONDecodeError:
+            # If not valid JSON, return the raw text
+            return text_response

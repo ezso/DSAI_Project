@@ -12,7 +12,6 @@ class GPT4oMini:
     def generate_user_input_text(self, ocr_text):
         return ("TASK:\n"
             f"Find any matches to the following words in the TEXT: \"{self.query}\".\n"
-            "If success then respond with \"Found: <word1, word2, ...>.\" Otherwise just respond with \"Not found.\"\n"
             "TASK END\n\n"
             "TEXT:\n" 
             f"{ocr_text}\n"
