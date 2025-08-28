@@ -1,6 +1,7 @@
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import json
+import re
 
 class PhiModel:
     def __init__(self, model_id, query, system_msg):
@@ -23,6 +24,17 @@ class PhiModel:
             f"{ocr_text}\n"
             "TEXT END"
         )
+    
+    import re
+
+    def find_last_dict_text(text: str) -> str | None:
+        """
+        Find and return the last dictionary-like string from the input text.
+        Returns the raw string.
+        """
+        pattern = r"\{.*?\}"
+        matches = re.findall(pattern, text, re.DOTALL)
+        return matches[-1] if matches else None
 
     def generate_response(self, ocr_text):
         prompt = self.generate_prompt(ocr_text)
@@ -31,7 +43,7 @@ class PhiModel:
         with torch.no_grad():
             output = self.model.generate(
                 **inputs,
-                max_new_tokens=300,
+                max_new_tokens=8192,
                 do_sample=False,
                 temperature=0.7,
                 top_p=0.9,
@@ -40,7 +52,7 @@ class PhiModel:
 
         # Decode and print result
         result = self.tokenizer.decode(output[0], skip_special_tokens=True)
-        text_response = result.split("TEXT END")[-1].strip()
+        text_response = self.find_last_dict_text(result)
         # Try to parse as JSON
         try:
             json_response = json.loads(text_response)
@@ -48,4 +60,4 @@ class PhiModel:
             return json_response
         except json.JSONDecodeError:
             # If not valid JSON, return the raw text
-            return text_response
+            return result

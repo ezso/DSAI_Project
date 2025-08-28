@@ -9,3 +9,5 @@ scikit-image
 lxml
 accelerate
 openai
+huggingface_hub
+kernels

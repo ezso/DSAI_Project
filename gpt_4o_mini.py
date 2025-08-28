@@ -27,38 +27,38 @@ class GPT4oMini:
         client = OpenAI(api_key = self.api_key)
 
         response = client.responses.create(
-        model=self.model_id,
-        input=[
-            {
-            "role": "system",
-            "content": [
+            model=self.model_id,
+            input=[
                 {
-                "type": "input_text",
-                "text": self.system_msg
+                "role": "system",
+                "content": [
+                    {
+                    "type": "input_text",
+                    "text": self.system_msg
+                    }
+                ]
+                },
+                {
+                "role": "user",
+                "content": [
+                    {
+                    "type": "input_text",
+                    "text": user_text
+                    }
+                ]
                 }
-            ]
+            ],
+            text={
+                "format": {
+                "type": "text"
+                }
             },
-            {
-            "role": "user",
-            "content": [
-                {
-                "type": "input_text",
-                "text": user_text
-                }
-            ]
-            }
-        ],
-        text={
-            "format": {
-            "type": "text"
-            }
-        },
-        reasoning={},
-        tools=[],
-        temperature=1,
-        max_output_tokens=2048,
-        top_p=1,
-        store=True
+            reasoning={},
+            tools=[],
+            temperature=1,
+            max_output_tokens=2048,
+            top_p=1,
+            store=True
         )
 
         text_response = response.output[0].content[0].text

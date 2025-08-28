@@ -2,7 +2,6 @@ from kraken import binarization, rpred
 from kraken.lib import models as kraken_models
 import cv2
 from PIL import Image
-import xml.etree.ElementTree as ET
 from kraken.pageseg import Segmentation, BBoxLine
 
 
@@ -14,27 +13,6 @@ def ocr2text(image_path, xml_path):
     predictions = get_predictions(bin_img, segmentation)
     line_texts = [line.prediction for line in predictions]
     full_text = "\n".join(line_texts)
-    return full_text
-
-def xml2text(xml_path):
-    # ALTO XML uses a default namespace
-    ns = {'alto': 'http://www.loc.gov/standards/alto/ns-v3#'}
-
-    # Parse the XML file
-    tree = ET.parse(xml_path)
-    root = tree.getroot()
-
-    lines = []
-
-    # Traverse each TextLine in the XML
-    for text_line in root.findall('.//alto:TextLine', ns):
-        words = [string.attrib.get("CONTENT", "") for string in text_line.findall("alto:String", ns)]
-        line_text = " ".join(words)
-        if line_text.strip():
-            lines.append(line_text)
-
-    full_text = "\n".join(lines)
-
     return full_text
     
 def get_segmentation(xml_path):

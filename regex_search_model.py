@@ -1,10 +1,9 @@
 import re
-import json
 
 class RegexSearchModel:
     def __init__(self, terms):
         self.terms = terms
-        self.confusions = {
+        self.single_confusions = {
             "a": "[aä]", 
             "ä": "[äa]", 
             "b": "[b]", 
@@ -35,18 +34,51 @@ class RegexSearchModel:
             "y": "[y]", 
             "z": "[z2]",
         }
+        
+        self.multi_confusions = {
+            "rn": "(?:rn|m)",
+            "vv": "(?:vv|w)",
+            "ri": "(?:ri|n)",
+            "cl": "(?:cl|d)",
+            "ch": "(?:ch|h)",
+            "ck": "(?:ck|k)",
+            "ſt": "(?:ſt|st|f)",
+            "ni": "(?:ni|m)",
+            "li": "(?:li|h)",
+            "tt": "(?:tt|n)",
+        }
     
-    def build_ocr_tolerant_pattern(self, term):
+    def build_ocr_tolerant_pattern(self, term: str) -> str:
         base = term.lower()
         pattern = ""
-        for ch in base:
-            if ch in self.confusions:
-                pattern += self.confusions[ch]
+
+        i = 0
+        while i < len(base):
+            # first check multi-character confusions
+            matched = False
+            for multi, replacement in self.multi_confusions.items():
+                if base.startswith(multi, i):
+                    pattern += replacement
+                    i += len(multi)
+                    matched = True
+                    break
+
+            if matched:
+                continue
+
+            # then check single-character confusions
+            ch = base[i]
+            if ch in self.single_confusions:
+                pattern += self.single_confusions[ch]
             else:
                 pattern += ch
-        # Allow any suffix (cognates, compounds) and minor internal noise
-        pattern = pattern.replace("", ".{0,1}")  # small tolerance between chars
-        return r"\b" + pattern + r"\w*\b"
+            i += 1
+
+        # allow small OCR noise between characters
+        pattern = ".{0,1}".join(pattern)
+
+        # word boundaries, but Unicode-safe
+        return r"(?<!\w)" + pattern + r"\w*(?!\w)"
     
     def generate_response(self, ocr_text):
         results = {"success": False}
