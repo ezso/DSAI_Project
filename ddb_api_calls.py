@@ -62,6 +62,7 @@ class DDBAPI:
             mets_xml = data["source"]["record"]["$"]
             issued = data['edm']['RDF']['ProvidedCHO']['issued']
             publisher = data['edm']['RDF']['ProvidedCHO']['publisher']['$']
+            title = data['edm']['RDF']['ProvidedCHO']['title']['$']
             xml_links = re.findall(r'https://[^\s"]+\.xml', mets_xml)
             xml_links = [url for url in xml_links if url.startswith("https://api.deutsche-digitale-bibliothek.de/binary/")]
 
@@ -80,7 +81,7 @@ class DDBAPI:
                 else:
                     print(f"❌ Failed to download XML: {xml_url}")
 
-            return folder, len(xml_links), issued, publisher
+            return folder, len(xml_links), issued, publisher, title
 
         except Exception as e:
             print(f"❗ Error with item {item_id}: {e}")

@@ -11,3 +11,4 @@ accelerate
 openai
 huggingface_hub
 kernels
+regex

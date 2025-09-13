@@ -47,7 +47,7 @@ def chunk_text_by_words(text, max_words):
         yield ' '.join(words[i:i + max_words])
 
 # Main function to orchestrate the process
-def main(terms, model_id, system_msg, pipeline=None):
+def main(terms, zdb, rows, offset, model_id, system_msg, pipeline=None):
 
     query = "{" + ", ".join([f'word{i+1}: "{term}"' for i, term in enumerate(terms)]) + "}"  # 'Anarchismus, Kommunismus, Sozialismus, Revolution'
     
@@ -73,9 +73,8 @@ def main(terms, model_id, system_msg, pipeline=None):
 
     # Initialize DDB API with parameters
     # The first parameter is the number of items to fetch, the second is the offset
-    rows = 10
-    offset = 0
-    ddb = DDBAPI(rows, offset)
+
+    ddb = DDBAPI(zdb, rows, offset)
     # get the ids from ddb 
     response = ddb.get_ddb_data()
     item_ids = ddb.get_ids(response)
@@ -89,7 +88,7 @@ def main(terms, model_id, system_msg, pipeline=None):
             continue
         ddb.add_id_to_visited(item_id)
 
-        folder, numpages, issued, publisher = ddb.get_xmls_only(item_id)
+        folder, numpages, issued, publisher, title = ddb.get_xmls_only(item_id)
         
         if folder == None or numpages == 0:
             print(f"Skipping item {item_id} due to a download error.")
@@ -122,6 +121,7 @@ def main(terms, model_id, system_msg, pipeline=None):
                 collector.add_row({
                     "item_id": item_id,
                     "publisher": publisher,
+                    "title": title,
                     "pub_date": issued,
                     "page_num": page,
                     "chunk": chunk,

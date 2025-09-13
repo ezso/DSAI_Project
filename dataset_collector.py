@@ -9,7 +9,7 @@ class DatasetCollector:
         if not os.path.exists(csv_file):
             with open(csv_file, mode='w', encoding='utf-8', newline='') as f:
                 writer = csv.writer(f)
-                writer.writerow(["item_id", "publisher", "pub_date", "page_num", "chunk", "success"] + terms + ["llm_response"])
+                writer.writerow(["item_id", "publisher", "title", "pub_date", "page_num", "chunk", "success"] + terms + ["llm_response"])
 
     def add_row(self, row_dict):
         with open(self.csv_file, mode='a', encoding='utf-8', newline='') as f:

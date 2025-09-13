@@ -40,7 +40,7 @@ class RegexSearchModel:
             "vv": "(?:vv|w)",
             "ri": "(?:ri|n)",
             "cl": "(?:cl|d)",
-            "ch": "(?:ch|h)",
+            "ch": "(?:ch|h|c|n)",
             "ck": "(?:ck|k)",
             "ſt": "(?:ſt|st|f)",
             "ni": "(?:ni|m)",
@@ -49,36 +49,57 @@ class RegexSearchModel:
         }
     
     def build_ocr_tolerant_pattern(self, term: str) -> str:
-        base = term.lower()
-        pattern = ""
+        """
+        Build an OCR-tolerant regex pattern for a given stem.
 
+        Features:
+        - Stem can appear anywhere in a word
+        - Handles optional wrappers like parentheses, brackets, braces, angled symbols, and top/bottom quotes
+        - Allows up to 3 consecutive OCR/noise characters between letters
+        - Handles OCR confusions (single and multi-character)
+        """
+        term = str(term)  # ensure string
+        lower = term.lower()
+
+        # sort multi_confusion keys by length desc so longer matches win (e.g. 'rn' before 'r')
+        multi_keys = sorted(self.multi_confusions.keys(), key=len, reverse=True)
+
+        parts = []
         i = 0
-        while i < len(base):
-            # first check multi-character confusions
-            matched = False
-            for multi, replacement in self.multi_confusions.items():
-                if base.startswith(multi, i):
-                    pattern += replacement
-                    i += len(multi)
-                    matched = True
+        while i < len(term):
+            matched_multi = False
+            for k in multi_keys:
+                if lower.startswith(k, i):
+                    # insert the regex fragment (it's already a regex)
+                    parts.append(self.multi_confusions[k])
+                    i += len(k)
+                    matched_multi = True
                     break
-
-            if matched:
+            if matched_multi:
                 continue
 
-            # then check single-character confusions
-            ch = base[i]
-            if ch in self.single_confusions:
-                pattern += self.single_confusions[ch]
+            ch = term[i]
+            lc = ch.lower()
+            if lc in self.single_confusions:
+                parts.append(self.single_confusions[lc])
             else:
-                pattern += ch
+                parts.append(re.escape(ch))
             i += 1
 
-        # allow small OCR noise between characters
-        pattern = ".{0,1}".join(pattern)
+        # noisy characters allowed between the pattern parts (0..3)
+        noisy = r'[\s\-\¬\�\?\«\>\<!:/|*#@~]{0,3}'
+        core = noisy.join(parts)
 
-        # word boundaries, but Unicode-safe
-        return r"(?<!\w)" + pattern + r"\w*(?!\w)"
+        # allow some letters before/after the stem (stem can be anywhere in a word)
+        word_prefix = r'\w{0,15}'
+        word_suffix = r'\w{0,15}'
+
+        # small wrappers/noise before/after (max 3)
+        opening_wrappers = r'[\(\[\{<"\'«‹„“”‘’\s\-\¬\�\?\>!:/|*#@~]{0,3}'
+        closing_wrappers = r'[\)\]\}>\”’»“‘\s\-\¬\�\?\<!:/|*#@~]{0,3}'
+
+        final_pattern = f"{opening_wrappers}{word_prefix}{core}{word_suffix}{closing_wrappers}"
+        return final_pattern
     
     def generate_response(self, ocr_text):
         results = {"success": False}
